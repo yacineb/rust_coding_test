@@ -9,7 +9,10 @@ mod transactions;
 fn run() -> Result<(), Box<dyn Error>> {
     let file_path = get_file_path()?;
     let records = datasource::csv_file_transactions_iterator(file_path)?;
-    compute_account_statues(records);
+    let states = compute_account_statues(records);
+    for state in states {
+        println!("state {:?}", state);
+    }
     Ok(())
 }
 

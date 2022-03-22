@@ -4,6 +4,9 @@ use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Default)]
 pub struct AccountStatus {
+    /// Client Identifier
+    pub client: u16,
+
     /// The total funds that are available for trading, staking,withdrawal, etc. Thisshould be equal to the total - held amounts
     available: f64,
     /// The total funds that are held for dispute. This shouldbe equal to total -available amounts
@@ -15,11 +18,15 @@ pub struct AccountStatus {
 
     #[serde(skip)]
     withdrawals: HashMap<u32, f64>,
+
+    #[serde(skip)]
+    disputes: HashMap<u32, f64>,
 }
 
 impl AccountStatus {
     /// Logic of handling transaction according to a given account status
     fn handle_transaction(&mut self, transaction: Transaction) {
+        assert_eq!(transaction.client, self.client);
         // case when client account has been frozen due to a chargeback
         if self.locked {
             return;
@@ -32,6 +39,7 @@ impl AccountStatus {
                 amount: Some(deposit),
                 tx: _,
             } if deposit >= 0.0 => {
+                // add deposit amount
                 self.available += deposit;
                 self.total += deposit;
             }
@@ -41,9 +49,9 @@ impl AccountStatus {
                 amount: Some(withdraw),
                 tx,
             } if withdraw >= 0.0 && withdraw <= self.available => {
-                // Execute withdrwal only when client funds are sufficiant
-                self.available += withdraw;
-                self.total += withdraw;
+                // Execute withdrawal only when client funds are sufficiant
+                self.available -= withdraw;
+                self.total -= withdraw;
 
                 self.withdrawals.insert(tx, withdraw);
             }
@@ -54,9 +62,40 @@ impl AccountStatus {
                 tx,
             } => {
                 // handle disputes only for prio non-disputed withdrawals
+                // case of disputes for deposit operations, was not handled. i'm not sure if this makes sense in a bank business..
                 if let Some((_, disputed_amount)) = self.withdrawals.remove_entry(&tx) {
                     self.held += disputed_amount;
                     self.available -= disputed_amount;
+
+                    // add to client disputes
+                    self.disputes.insert(tx, disputed_amount);
+                }
+            }
+            Transaction {
+                r#type: TransactionType::Resolve,
+                client: _,
+                amount: _,
+                tx,
+            } => {
+                // lookup for an existing dispute, and handle its resolution (reverse of dispute operation)
+                if let Some(disputed_amount) = self.disputes.get(&tx) {
+                    self.held -= disputed_amount;
+                    self.available += disputed_amount;
+                }
+            }
+            Transaction {
+                r#type: TransactionType::Chargeback,
+                client: _,
+                amount: _,
+                tx,
+            } => {
+                // lookup for an existing dispute, and handle its resolution
+                if let Some((_, disputed_amount)) = self.disputes.remove_entry(&tx) {
+                    self.held -= disputed_amount;
+                    self.total += disputed_amount;
+
+                    // freeze the account immediately after a chargeback
+                    self.locked = true;
                 }
             }
             _ => (), // ignore any other case
@@ -64,16 +103,20 @@ impl AccountStatus {
     }
 }
 
-pub fn compute_account_statues(transactions: impl Iterator<Item = Transaction>) {
+pub fn compute_account_statues(
+    transactions: impl Iterator<Item = Transaction>,
+) -> impl Iterator<Item = AccountStatus> {
     let mut accounts: HashMap<u16, AccountStatus> = HashMap::new();
 
     for transaction in transactions {
         println!("processing {:?}", transaction);
 
-        let account = accounts
-            .entry(transaction.client)
-            .or_insert(Default::default());
-
+        let client_id = transaction.client;
+        let account = accounts.entry(client_id).or_insert(Default::default());
+        account.client = client_id;
         account.handle_transaction(transaction);
     }
+
+    // ordering by client id does not matter
+    accounts.into_iter().map(|(_, x)| x)
 }
