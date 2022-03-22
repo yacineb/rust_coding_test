@@ -2,16 +2,27 @@ use crate::dtos::{Transaction, TransactionType};
 use serde::Deserialize;
 use std::collections::HashMap;
 
+#[cfg(feature = "dead_code")]
+fn round_4decimals_serialize<S>(x: &f64, s: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    s.serialize_f64((x * 10000.0).round() / 10000.0)
+}
+
 #[derive(Debug, Deserialize, Default)]
 pub struct AccountStatus {
     /// Client Identifier
-    pub client: u16,
+    client: u16,
 
     /// The total funds that are available for trading, staking,withdrawal, etc. Thisshould be equal to the total - held amounts
+    #[serde(serialize_with = "round_4decimals_serialize")]
     available: f64,
     /// The total funds that are held for dispute. This shouldbe equal to total -available amounts
+    #[serde(serialize_with = "round_4decimals_serialize")]
     held: f64,
     /// The total funds that are available or held. This shouldbe equal to available +held
+    #[serde(serialize_with = "round_4decimals_serialize")]
     total: f64,
     /// whether a dispute has occured on the account
     locked: bool,
