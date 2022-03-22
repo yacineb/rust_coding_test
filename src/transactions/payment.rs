@@ -1,3 +1,6 @@
+use introspection::*;
+use introspection_derive::*;
+
 use crate::dtos::{Transaction, TransactionType};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -10,7 +13,7 @@ where
     s.serialize_f64((x * 10000.0).round() / 10000.0)
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Introspection)]
 pub struct AccountStatus {
     /// Client Identifier
     client: u16,
