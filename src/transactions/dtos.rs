@@ -12,14 +12,14 @@ pub enum TransactionType {
 
 #[derive(Debug, Deserialize)]
 pub struct Transaction {
-    r#type: TransactionType,
+    pub r#type: TransactionType,
 
     /// Client Identifier
-    client: u16,
+    pub client: u16,
 
     /// Transaction Identifier
-    tx: u32,
+    pub tx: u32,
 
     /// Transaction amount
-    amount: Option<f64>,
+    pub amount: Option<f64>,
 }
