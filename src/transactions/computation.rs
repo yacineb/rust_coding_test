@@ -71,7 +71,7 @@ impl AccountBalance {
                 // lookup for an existing dispute, and handle its resolution
                 if let Some((_, disputed_amount)) = self.disputes.remove_entry(&tx) {
                     self.held -= disputed_amount;
-                    self.total += disputed_amount;
+                    self.total -= disputed_amount;
 
                     // freeze the account immediately after a chargeback
                     self.locked = true;
