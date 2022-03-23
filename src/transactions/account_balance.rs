@@ -1,5 +1,3 @@
-use introspection_derive::*;
-
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -10,7 +8,7 @@ where
     s.serialize_f64((x * 10000.0).round() / 10000.0)
 }
 
-#[derive(Debug, Serialize, Default, Introspection)]
+#[derive(Debug, Serialize, Default)]
 pub struct AccountBalance {
     /// Client Identifier
     pub client: u16,
