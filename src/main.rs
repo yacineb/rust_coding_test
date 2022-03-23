@@ -17,5 +17,8 @@ fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn main() {
-    run().unwrap();
+    if let Err(e) = run() {
+        eprintln!("Application error: {}", e);
+        std::process::exit(1);
+    }
 }
