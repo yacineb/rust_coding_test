@@ -1,4 +1,4 @@
-use crate::dtos::Transaction;
+use crate::transactions::transaction::*;
 use csv::ReaderBuilder;
 use std::{fs::File, path::Path};
 

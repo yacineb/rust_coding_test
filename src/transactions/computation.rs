@@ -1,43 +1,8 @@
-use introspection::*;
-use introspection_derive::*;
-
-use crate::dtos::{Transaction, TransactionType};
-use serde::Deserialize;
+use crate::transactions::account_balance::AccountBalance;
+use crate::transactions::transaction::*;
 use std::collections::HashMap;
 
-#[cfg(feature = "dead_code")]
-fn round_4decimals_serialize<S>(x: &f64, s: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    s.serialize_f64((x * 10000.0).round() / 10000.0)
-}
-
-#[derive(Debug, Deserialize, Default, Introspection)]
-pub struct AccountStatus {
-    /// Client Identifier
-    client: u16,
-
-    /// The total funds that are available for trading, staking,withdrawal, etc. Thisshould be equal to the total - held amounts
-    #[serde(serialize_with = "round_4decimals_serialize")]
-    available: f64,
-    /// The total funds that are held for dispute. This shouldbe equal to total -available amounts
-    #[serde(serialize_with = "round_4decimals_serialize")]
-    held: f64,
-    /// The total funds that are available or held. This shouldbe equal to available +held
-    #[serde(serialize_with = "round_4decimals_serialize")]
-    total: f64,
-    /// whether a dispute has occured on the account
-    locked: bool,
-
-    #[serde(skip)]
-    withdrawals: HashMap<u32, f64>,
-
-    #[serde(skip)]
-    disputes: HashMap<u32, f64>,
-}
-
-impl AccountStatus {
+impl AccountBalance {
     /// Logic of handling transaction according to a given account status
     fn handle_transaction(&mut self, transaction: Transaction) {
         assert_eq!(transaction.client, self.client);
@@ -117,10 +82,11 @@ impl AccountStatus {
     }
 }
 
-pub fn compute_account_statues(
+/// Computes account balances for a set of Transactions
+pub fn compute(
     transactions: impl Iterator<Item = Transaction>,
-) -> impl Iterator<Item = AccountStatus> {
-    let mut accounts: HashMap<u16, AccountStatus> = HashMap::new();
+) -> impl Iterator<Item = AccountBalance> {
+    let mut accounts: HashMap<u16, AccountBalance> = HashMap::new();
 
     for transaction in transactions {
         println!("processing {:?}", transaction);
