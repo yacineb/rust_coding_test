@@ -1,9 +1,8 @@
 use introspection_derive::*;
 
-use serde::Deserialize;
+use serde::Serialize;
 use std::collections::HashMap;
 
-#[cfg(feature = "dead_code")]
 fn round_4decimals_serialize<S>(x: &f64, s: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
@@ -11,7 +10,7 @@ where
     s.serialize_f64((x * 10000.0).round() / 10000.0)
 }
 
-#[derive(Debug, Deserialize, Default, Introspection)]
+#[derive(Debug, Serialize, Default, Introspection)]
 pub struct AccountBalance {
     /// Client Identifier
     pub client: u16,

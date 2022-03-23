@@ -89,8 +89,6 @@ pub fn compute(
     let mut accounts: HashMap<u16, AccountBalance> = HashMap::new();
 
     for transaction in transactions {
-        println!("processing {:?}", transaction);
-
         let client_id = transaction.client;
         let account = accounts.entry(client_id).or_insert(Default::default());
         account.client = client_id;

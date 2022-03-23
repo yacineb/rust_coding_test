@@ -4,15 +4,15 @@ use crate::transactions::*;
 use std::error::Error;
 
 mod cli;
+mod exporters;
 mod transactions;
 
 fn run() -> Result<(), Box<dyn Error>> {
     let file_path = get_file_path()?;
     let transactions = csv_file_transactions_iterator(file_path)?;
-    let states = computation::compute(transactions);
-    for state in states {
-        println!("state {:?}", state);
-    }
+    let accounts = computation::compute(transactions);
+
+    exporters::export_as_csv(std::io::stdout(), accounts)?;
     Ok(())
 }
 
