@@ -9,3 +9,4 @@ expected outputs have out.csv extension
 - 3.csv: ignore disputes, resolves,chargebacks on non-existing transactions
 - 4.csv: a scenario of a chargback
 - 5.csv: a scenario of a resolved dispute
+- 6.csv : same than previous but with a chargeback on a transaction on which is not under dispute

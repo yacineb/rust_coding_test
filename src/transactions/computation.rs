@@ -42,7 +42,7 @@ impl AccountBalance {
             } => {
                 // handle disputes only for prio non-disputed withdrawals
                 // case of disputes for deposit operations, was not handled. i'm not sure if this makes sense in a bank business..
-                if let Some((_, disputed_amount)) = self.withdrawals.remove_entry(&tx) {
+                if let Some(&disputed_amount) = self.withdrawals.get(&tx) {
                     self.held += disputed_amount;
                     self.available -= disputed_amount;
 
@@ -57,7 +57,8 @@ impl AccountBalance {
                 tx,
             } => {
                 // lookup for an existing dispute, and handle its resolution (reverse of dispute operation)
-                if let Some(disputed_amount) = self.disputes.get(&tx) {
+                // a Resolve operation will undo a dispute
+                if let Some((_, disputed_amount)) = self.disputes.remove_entry(&tx) {
                     self.held -= disputed_amount;
                     self.available += disputed_amount;
                 }
@@ -96,5 +97,8 @@ pub fn compute(
     }
 
     // ordering by client id does not matter
-    accounts.into_iter().map(|(_, x)| x)
+    accounts.into_iter().map(|(_, x)| {
+        assert_eq!(x.total, x.available + x.held);
+        x
+    })
 }
